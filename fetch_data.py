@@ -16,7 +16,7 @@ if opening < dt.datetime.now() < closing:
 
     datetime_str = dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    soup = BeautifulSoup(r)
+    soup = BeautifulSoup(r, "lxml")
 
     lmenu = soup.findAll('li', {'class':['beer_even', 'beer_odd']})
     for beer in lmenu:
