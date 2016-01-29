@@ -5,23 +5,24 @@ import datetime as dt
 
 slug = "http://www.chucks85th.com"
 
-r = requests.get(slug).content
+opening = dt.datetime.combine(dt.datetime.today(), dt.time(11,0,0))
+closing = dt.datetime.combine(dt.datetime.today(), dt.time(23,59,0))
 
-conn = sqlite3.connect('chucks.db')
-c = conn.cursor()
+if opening < dt.datetime.now() < closing:
+    r = requests.get(slug).content
 
-datetime = dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    conn = sqlite3.connect('chucks.db')
+    c = conn.cursor()
 
-with open('index.html', 'r') as r:
+    datetime_str = dt.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
     soup = BeautifulSoup(r)
 
     lmenu = soup.findAll('li', {'class':['beer_even', 'beer_odd']})
     for beer in lmenu:
         info = beer.get_text()
-        linelist = [x.strip() for x in info.split("\n")][1:7]
-        linelist = [datetime] + linelist
-        print linelist
+        linelist = [datetime_str] + [x.strip() for x in info.split("\n")][1:7]
         if linelist[2] != 'Growler':
             c.execute('INSERT INTO Beerlist VALUES (?,?,?,?,?,?,?)',
                     linelist)
-conn.commit()
+    conn.commit()
