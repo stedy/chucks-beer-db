@@ -1,8 +1,11 @@
 library(RSQLite)
 library(dplyr)
+`%notin%` <- function(x,y) !(x %in% y)
 
 conn <- dbConnect(SQLite(), 'chucks.db')
-raw_data <- dbGetQuery(conn, "SELECT * FROM Beerlist")
+raw_data <- dbGetQuery(conn, "SELECT * FROM Beerlist") %>%
+  subset(brewery %notin% c("Humm", "IPA Flight", "IPA FLIGHT",
+                           "Cider Flight", "CIDER FLIGHT"))
 dbDisconnect(conn)
 
 key_metrics <- 
@@ -26,7 +29,12 @@ lengths <-
   group_by(brewery, beer) %>%
   do(data.frame(total = sum(.$pour_time),
                 totaldays = length(unique(.$day)))) %>%
-  mutate(on_tap = (total/totaldays) / 60)
+  mutate(on_tap = (total/totaldays) / 60) %>%
+  select(brewery, beer, on_tap) %>%
+  ungroup() %>%
+  arrange(on_tap)
+
+knitr::kable(lengths)
 
 for_plot <-
   key_metrics %>%
@@ -35,16 +43,18 @@ for_plot <-
 
 p <- ggplot(for_plot, aes(x=abv, y=pint_cost, label = print_label))
 p + geom_text(check_overlap = TRUE)
-ggsave("cost_vs_abv.png")
+ggsave("cost_vs_abv.png", width=12, height=7, units="in")
 
 lengths_metrics <- merge(lengths, key_metrics)
 
 p <- ggplot(lengths_metrics, aes(x=abv, y=on_tap, label = print_label))
 p + geom_text(check_overlap = TRUE) + 
-  ggtitle("Minutes on tap vs. ABV per pint")
-ggsave("min_on_tap_vs_abv.png")
+  ggtitle("Minutes on tap vs. ABV per pint") +
+  xlab("ABV") + ylab("Minutes on tap")
+ggsave("min_on_tap_vs_abv.png", width=12, height=7, units="in")
 
 p <- ggplot(lengths_metrics, aes(x=pint_cost, y=on_tap, label = print_label))
 p + geom_text(check_overlap = TRUE) +
-  ggtitle("Minutes on tap vs. price per pint")
-ggsave("min_on_tap_vs_price.png")
+  ggtitle("Minutes on tap vs. price per pint") +
+  xlab("Pint price") + ylab("Minutes on tap")
+ggsave("min_on_tap_vs_price.png", width=12, height=7, units="in")
