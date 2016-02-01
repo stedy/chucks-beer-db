@@ -20,7 +20,8 @@ lengths <-
   raw_data %>%
   mutate(datetime = as.POSIXct(datetime),
          day = lubridate::day(datetime)) %>%
-  subset(datetime >= as.POSIXct("2016-01-29 11:00:00")) %>%
+  subset(datetime >= as.POSIXct("2016-01-29 11:00:00") &
+           datetime <= as.POSIXct("2016-01-31 23:59:59") ) %>%
   group_by(day, brewery, beer) %>%
   do(data.frame(earliest = min(.$datetime),
      latest = max(.$datetime))) %>%
